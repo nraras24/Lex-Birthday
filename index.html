@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alexa's Birthday Card</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #58bcff;
+            flex-direction: column;
+            margin: 0;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .submit-button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .submit-button:hover {
+            background-color: #0056b3;
+        }
+        .countdown {
+            font-size: 2.5em;
+            text-align: center;
+        }
+        #time {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: black;
+        }
+        .error-message {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: red;
+        }
+        .birthday-message {
+            font-size: 2em;
+            font-weight: bold;
+            color: rgb(0, 0, 0);
+        }
+        .video-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .video-container iframe {
+            width: 100%;
+            max-width: 800px;
+            height: 300px;
+        }
+        .top-right-message {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.0em;
+            font-weight: bold;
+            color: #000000;
+        }
+        .today-message {
+            font-size: 4em;
+            font-weight: bold;
+            color: black;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Alexa's Birthday Card</h2>
+    <form id="pickleball-form">
+        <div class="form-group">
+            <label for="first-name">First Name</label>
+            <input type="text" id="first-name" name="first-name" required>
+        </div>
+        <div class="form-group">
+            <label for="last-name">Last Name</label>
+            <input type="text" id="last-name" name="last-name" required>
+        </div>
+        <div class="form-group">
+            <label for="question">Is Nathan better than you at pickleball?</label>
+            <select id="question" name="question" required>
+                <option value="" disabled selected>Select an option</option>
+                <option value="yes">Yes</option>
+                <option value="obviously">Obviously</option>
+                <option value="definitely">Definitely</option>
+                <option value="no shit sherlock">No Shit Sherlock</option>
+            </select>
+        </div>
+        <button type="submit" class="submit-button">Submit</button>
+    </form>
+</div>
+
+<div class="countdown" id="countdown">
+    Time remaining until July 27th, MDT:
+    <div id="time"></div>
+</div>
+
+<div class="message" id="error-message"></div>
+<div class="message birthday-message" id="today-message"></div>
+<div class="top-right-message" id="top-right-message"></div>
+<div class="video-container" id="video-container">
+    <div class="message birthday-message" id="birthday-message"></div>
+    <iframe id="birthday-video" src="https://www.youtube.com/embed/UT1ChQp4APs" frameborder="0" allowfullscreen></iframe>
+</div>
+<canvas id="fireworks"></canvas>
+
+<script>
+document.getElementById('pickleball-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const firstName = document.getElementById('first-name').value;
+    const lastName = document.getElementById('last-name').value;
+
+    if (firstName === 'Alexa' && lastName === 'Richardson') {
+        document.querySelector('.container').style.display = 'none';
+        document.getElementById('countdown').style.display = 'block';
+        startCountdown();
+    } else {
+        document.querySelector('.container').style.display = 'none';
+        document.getElementById('error-message').innerHTML = '<p>You are not Lex, this site is not for you >:(</p>';
+        document.getElementById('error-message').classList.add('error-message');
+    }
+});
+
+function startCountdown() {
+    const endDate = new Date('July 25, 2024 16:06:00 PDT').getTime();
+
+    const updateCountdown = () => {
+        const now = new Date().getTime();
+        const distance = endDate - now;
+
+        if (distance < 0) {
+            document.getElementById('countdown').style.display = 'none';
+            document.getElementById('today-message').innerHTML = "Today is the day! Turn your phone horizontally and tap around for fireworks!";
+            document.getElementById('today-message').style.display = 'block';
+            startFireworks(); // Start the fireworks animation
+            setTimeout(() => {
+                document.getElementById('today-message').style.display = 'none';
+                document.getElementById('birthday-message').innerHTML = "To the greatest Leo of all time: Happy birthday Lex, let's party when you're home <3 - Nathan";
+                document.getElementById('birthday-message').style.display = 'block';
+                document.getElementById('top-right-message').innerHTML = 'btw you suck at pickleball';
+                setTimeout(() => {
+                    document.getElementById('top-right-message').style.display = 'none';
+                    document.getElementById('video-container').style.display = 'block';
+                }, 6000); // Wait for 6 seconds before showing the video
+            }, 6000); // Wait for 6 seconds before showing the birthday message
+            clearInterval(interval);
+            return;
+        }
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        document.getElementById('time').innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    };
+
+    const interval = setInterval(updateCountdown, 1000);
+}
+
+document.getElementById('countdown').style.display = 'none';
+document.getElementById('video-container').style.display = 'none';
+
+function startFireworks() {
+    const canvas = document.getElementById('fireworks');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const fireworks = [];
+
+    class Firework {
+        constructor(x, y, targetX, targetY) {
+            this.x = x;
+            this.y = y;
+            this.targetX = targetX;
+            this.targetY = targetY;
+            this.distanceToTarget = this.calculateDistance(x, y, targetX, targetY);
+            this.distanceTraveled = 0;
+            this.coordinates = [];
+            this.coordinateCount = 3;
+            while (this.coordinateCount--) {
+                this.coordinates.push([this.x, this.y]);
+            }
+            this.angle = Math.atan2(targetY - y, targetX - x);
+            this.speed = 2;
+            this.acceleration = 1.05;
+            this.brightness = Math.random() * 50 + 50;
+            this.targetRadius = 1;
+        }
+
+        update(index) {
+            this.coordinates.pop();
+            this.coordinates.unshift([this.x, this.y]);
+
+            if (this.targetRadius < 8) {
+                this.targetRadius += 0.3;
+            } else {
+                this.targetRadius = 1;
+            }
+
+            this.speed *= this.acceleration;
+
+            const vx = Math.cos(this.angle) * this.speed;
+            const vy = Math.sin(this.angle) * this.speed;
+            this.distanceTraveled = this.calculateDistance(this.startX, this.startY, this.x + vx, this.y + vy);
+
+            if (this.distanceTraveled >= this.distanceToTarget) {
+                fireworks.splice(index, 1);
+                createParticles(this.targetX, this.targetY);
+            } else {
+                this.x += vx;
+                this.y += vy;
+            }
+        }
+
+        calculateDistance(x1, y1, x2, y2) {
+            const xDistance = x2 - x1;
+            const yDistance = y2 - y1;
+            return Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2));
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+            ctx.lineTo(this.x, this.y);
+            ctx.strokeStyle = `hsl(${Math.random() * 360}, 100%, ${this.brightness}%)`;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(this.targetX, this.targetY, this.targetRadius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+
+    class Particle {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.coordinates = [];
+            this.coordinateCount = 5;
+            while (this.coordinateCount--) {
+                this.coordinates.push([this.x, this.y]);
+            }
+            this.angle = Math.random() * Math.PI * 2;
+            this.speed = Math.random() * 10 + 1;
+            this.friction = 0.95;
+            this.gravity = 1;
+            this.hue = Math.random() * 360;
+            this.brightness = Math.random() * 50 + 50;
+            this.alpha = 1;
+            this.decay = Math.random() * 0.03 + 0.015;
+        }
+
+        update(index) {
+            this.coordinates.pop();
+            this.coordinates.unshift([this.x, this.y]);
+            this.speed *= this.friction;
+            this.x += Math.cos(this.angle) * this.speed;
+            this.y += Math.sin(this.angle) * this.speed + this.gravity;
+            this.alpha -= this.decay;
+
+            if (this.alpha <= this.decay) {
+                particles.splice(index, 1);
+            }
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+            ctx.lineTo(this.x, this.y);
+            ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+            ctx.stroke();
+        }
+    }
+
+    function createParticles(x, y) {
+        let particleCount = 30;
+        while (particleCount--) {
+            particles.push(new Particle(x, y));
+        }
+    }
+
+    let particles = [];
+
+    function loop() {
+        requestAnimationFrame(loop);
+
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = `rgba(0, 0, 0, 0.5)`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'lighter';
+
+        let i = fireworks.length;
+        while (i--) {
+            fireworks[i].draw();
+            fireworks[i].update(i);
+        }
+
+        let j = particles.length;
+        while (j--) {
+            particles[j].draw();
+            particles[j].update(j);
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        const x = e.clientX;
+        const y = e.clientY;
+        fireworks.push(new Firework(canvas.width / 2, canvas.height, x, y));
+    });
+
+    loop();
+}
+
+</script>
+
+</body>
+</html>
